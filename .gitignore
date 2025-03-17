@@ -1,0 +1,7 @@
+*.o
+*.a
+*.S
+*_linux
+*_ll
+tags
+tags.*

@@ -51,6 +51,7 @@
 # include <sys/epoll.h>
 #endif
 
+#define RX_EXPECTED_SZ 8
 #define MIN(a,b) ((b) < (a) ? (b) : (a))
 
 #define CONN_DEBUG(c, co, x...) do { } while (0)
@@ -229,7 +230,7 @@ static inline void conn_connect(struct core *c, struct connection *co)
     co->ep_wr = 1;
     co->pending = 0;
     co->tx_cnt = 0;
-    co->rx_remain = message_size;
+    co->rx_remain = RX_EXPECTED_SZ;
     co->tx_remain = message_size;
 #ifdef PRINT_STATS
     co->cnt = 0;
@@ -355,7 +356,7 @@ static inline int conn_receive(struct core *c, struct connection *co)
 #ifdef PRINT_STATS
         tsc = get_nanos_stats();
 #endif
-        ret = ss_read(sc, fd, rx_buf + message_size - co->rx_remain,
+        ret = ss_read(sc, fd, rx_buf + RX_EXPECTED_SZ - co->rx_remain,
             co->rx_remain);
         STATS_ADD(c, rx_cycles, get_nanos_stats() - tsc);
         if (ret > 0) {
@@ -368,8 +369,9 @@ static inline int conn_receive(struct core *c, struct connection *co)
             if (co->rx_remain == 0) {
                 /* received whole message */
                 __sync_fetch_and_add(&c->messages, 1);
+		/* printf("ts: %ld\n", *rx_ts); */
                 record_latency(c, get_nanos() - *rx_ts);
-                co->rx_remain = message_size;
+                co->rx_remain = RX_EXPECTED_SZ;
                 co->pending--;
 #ifdef PRINT_STATS
                 co->cnt++;

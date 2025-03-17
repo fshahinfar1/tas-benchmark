@@ -46,6 +46,8 @@
 #include "../common/socket_shim.h"
 #include "../common/microbench.h"
 
+#define EXPECTED_TX_LEN 8
+
 //#define PRINT_STATS
 //#define PRINT_TSS
 #ifdef PRINT_STATS
@@ -426,6 +428,7 @@ static void *thread_run(void *arg)
                 /* send out remaining buffer contents */
                 if (c->ep_write) {
                     assert(c->len == max_bytes);
+                   c->len = EXPECTED_TX_LEN;
                     assert(c->off < c->len);
 
                     ret = conn_send(co, c);
@@ -487,6 +490,7 @@ static void *thread_run(void *arg)
 
                 /* send out response */
                 assert(c->len == max_bytes);
+               c->len = EXPECTED_TX_LEN;
                 assert(c->off < c->len);
                 ret = conn_send(co, c);
                 if (ret != 0) {
